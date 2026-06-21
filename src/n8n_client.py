@@ -1,12 +1,13 @@
 """
 n8n webhook client for AI-powered lead enrichment.
 
-Expected webhook POST payload:
-  business_name, website, domain, address, phone, page_text
+Expected webhook POST payload (full lead record + page_text):
+  name, business_name (alias), email, phone, address, domain, website,
+  category, keyword, search_location, maps_url, page_text
 
 Expected webhook JSON response:
-  owner_name   – string (empty if not found)
-  notes        – optional string
+  owner_name   - string (empty if not found)
+  notes        - optional string
 """
 
 import requests
@@ -29,13 +30,23 @@ class N8nClient:
         if not self.enabled:
             return {}
 
+        email = business.get("email", "")
+        if isinstance(email, list):
+            email = "; ".join(email)
+
         payload = {
-            "business_name": business.get("name", ""),
-            "website":       business.get("website", ""),
-            "domain":        business.get("domain", ""),
-            "address":       business.get("address", ""),
-            "phone":         business.get("phone", ""),
-            "page_text":     page_text,
+            "name":            business.get("name", ""),
+            "business_name":   business.get("name", ""),   # alias for AI prompt
+            "email":           email,
+            "phone":           business.get("phone", ""),
+            "address":         business.get("address", ""),
+            "domain":          business.get("domain", ""),
+            "website":         business.get("website", ""),
+            "category":        business.get("category", ""),
+            "keyword":         business.get("keyword", ""),
+            "search_location": business.get("search_location", ""),
+            "maps_url":        business.get("maps_url", ""),
+            "page_text":       page_text,
         }
 
         try:
