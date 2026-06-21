@@ -1,5 +1,5 @@
 # ================================================================
-# Google Maps Lead Scraper — Launcher
+# Google Maps Lead Scraper - Launcher
 # Run .\setup.ps1 first if this is your first time.
 # ================================================================
 param(

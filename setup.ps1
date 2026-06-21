@@ -1,5 +1,5 @@
 # ================================================================
-# Google Maps Lead Scraper — Windows Setup
+# Google Maps Lead Scraper - Windows Setup
 # Run once before first use:  .\setup.ps1
 # ================================================================
 param([switch]$Force)
@@ -10,10 +10,10 @@ function Write-OK($m)   { Write-Host "[+] $m" -ForegroundColor Green }
 function Write-Warn($m) { Write-Host "[!] $m" -ForegroundColor Yellow }
 
 Write-Host "================================================" -ForegroundColor Magenta
-Write-Host "  Google Maps Lead Scraper — Setup" -ForegroundColor Magenta
+Write-Host "  Google Maps Lead Scraper - Setup" -ForegroundColor Magenta
 Write-Host "================================================" -ForegroundColor Magenta
 
-# ── 1. Find or install Python ─────────────────────────────────────
+# -- 1. Find or install Python -------------------------------------
 Write-Step "Checking for Python 3.9+..."
 $pythonCmd = $null
 foreach ($cmd in @("python", "python3", "py")) {
@@ -25,14 +25,14 @@ foreach ($cmd in @("python", "python3", "py")) {
                 Write-OK "Found $ver  ($cmd)"
                 break
             } else {
-                Write-Warn "Found $ver — need 3.9+"
+                Write-Warn "Found $ver - need 3.9+"
             }
         }
     } catch { }
 }
 
 if (-not $pythonCmd) {
-    Write-Warn "Python 3.9+ not found — downloading installer..."
+    Write-Warn "Python 3.9+ not found - downloading installer..."
     $url  = "https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe"
     $dest = "$env:TEMP\python-3.12.4-amd64.exe"
     Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
@@ -45,7 +45,7 @@ if (-not $pythonCmd) {
     Write-OK "Python 3.12 installed"
 }
 
-# ── 2. Virtual environment ────────────────────────────────────────
+# -- 2. Virtual environment ----------------------------------------
 Write-Step "Setting up virtual environment..."
 if ((Test-Path ".venv") -and -not $Force) {
     Write-OK ".venv already exists  (pass -Force to recreate)"
@@ -55,18 +55,18 @@ if ((Test-Path ".venv") -and -not $Force) {
     Write-OK ".venv created"
 }
 
-# ── 3. Dependencies ───────────────────────────────────────────────
+# -- 3. Dependencies -----------------------------------------------
 Write-Step "Installing Python packages..."
 & .venv\Scripts\pip.exe install --upgrade pip --quiet
 & .venv\Scripts\pip.exe install -r requirements.txt --quiet
 Write-OK "Packages installed"
 
-# ── 4. Playwright browser ─────────────────────────────────────────
+# -- 4. Playwright browser -----------------------------------------
 Write-Step "Installing Playwright / Chromium..."
 & .venv\Scripts\playwright.exe install chromium
 Write-OK "Chromium ready"
 
-# ── Done ──────────────────────────────────────────────────────────
+# -- Done ----------------------------------------------------------
 Write-Host "`n================================================" -ForegroundColor Green
 Write-Host "  Setup complete!" -ForegroundColor Green
 Write-Host "================================================" -ForegroundColor Green
