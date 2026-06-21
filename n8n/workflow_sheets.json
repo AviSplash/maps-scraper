@@ -12,10 +12,7 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [
-        220,
-        300
-      ],
+      "position": [220, 300],
       "webhookId": "maps-scraper-leads"
     },
     {
@@ -27,31 +24,20 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
-              "value": "application/json"
-            }
+            {"name": "anthropic-version", "value": "2023-06-01"},
+            {"name": "content-type", "value": "application/json"}
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 256, messages: [{ role: 'user', content: 'You are a business intelligence assistant. Based on this website text from ' + $json.business_name + ' (' + $json.domain + '), extract the owner or founder name if clearly stated. RULES: Return ONLY valid JSON, no explanation. owner_name is the full name string, or empty string if not found. Do not guess - only extract names that are explicitly stated. Website text: ' + ($json.page_text || '') + ' Respond with JSON only: {\"owner_name\": \"Name or empty\", \"confidence\": \"high|medium|low\"}' }] }) }}",
-        "options": {
-          "timeout": 25000
-        }
+        "options": {"timeout": 25000}
       },
       "id": "node-ai-002",
       "name": "Claude Haiku - Extract Owner",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [
-        460,
-        300
-      ],
+      "position": [460, 480],
       "credentials": {
         "httpHeaderAuth": {
           "id": "REPLACE_ANTHROPIC_CRED",
@@ -61,16 +47,25 @@
     },
     {
       "parameters": {
-        "jsCode": "const blocks = $input.first().json.content || [];\nconst text = Array.isArray(blocks)\n  ? (blocks.find(b => b.type === 'text') || {}).text || ''\n  : String(blocks);\nlet owner_name = '', confidence = 'low';\ntry {\n  const m = text.match(/\\{[\\s\\S]*\\}/);\n  if (m) {\n    const parsed = JSON.parse(m[0]);\n    owner_name = (parsed.owner_name || '').trim();\n    confidence = parsed.confidence || 'low';\n  }\n} catch (_) {}\nconst lead = $('Webhook').item.json;\nconst pad = n => String(n).padStart(2, '0');\nconst d = new Date();\nconst scraped_at = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} `\n  + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;\nreturn [{ json: {\n  name: lead.name || lead.business_name || '',\n  owner_name,\n  email: lead.email || '',\n  phone: lead.phone || '',\n  address: lead.address || '',\n  domain: lead.domain || '',\n  website: lead.website || '',\n  category: lead.category || '',\n  keyword: lead.keyword || '',\n  search_location: lead.search_location || '',\n  maps_url: lead.maps_url || '',\n  scraped_at,\n  confidence,\n} }];"
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "node-merge-006",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst blocks = item.content || [];\nconst text = Array.isArray(blocks)\n  ? (blocks.find(b => b.type === 'text') || {}).text || ''\n  : String(blocks);\nlet owner_name = '', confidence = 'low';\ntry {\n  const m = text.match(/\\{[\\s\\S]*\\}/);\n  if (m) {\n    const parsed = JSON.parse(m[0]);\n    owner_name = (parsed.owner_name || '').trim();\n    confidence = parsed.confidence || 'low';\n  }\n} catch (_) {}\nconst pad = n => String(n).padStart(2, '0');\nconst d = new Date();\nconst scraped_at = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} `\n  + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;\nreturn [{ json: {\n  name: item.name || item.business_name || '',\n  owner_name,\n  email: item.email || '',\n  phone: item.phone || '',\n  address: item.address || '',\n  domain: item.domain || '',\n  website: item.website || '',\n  category: item.category || '',\n  keyword: item.keyword || '',\n  search_location: item.search_location || '',\n  maps_url: item.maps_url || '',\n  scraped_at,\n  confidence,\n} }];"
       },
       "id": "node-buildrow-003",
       "name": "Build Row",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        700,
-        300
-      ]
+      "position": [940, 300]
     },
     {
       "parameters": {
@@ -103,10 +98,7 @@
       "name": "Google Sheets - Append or Update",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [
-        940,
-        300
-      ],
+      "position": [1180, 300],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "REPLACE_SHEETS_CRED",
@@ -124,32 +116,29 @@
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [
-        1180,
-        300
-      ]
+      "position": [1420, 300]
     }
   ],
   "connections": {
     "Webhook": {
       "main": [
         [
-          {
-            "node": "Claude Haiku - Extract Owner",
-            "type": "main",
-            "index": 0
-          }
+          {"node": "Claude Haiku - Extract Owner", "type": "main", "index": 0},
+          {"node": "Merge", "type": "main", "index": 0}
         ]
       ]
     },
     "Claude Haiku - Extract Owner": {
       "main": [
         [
-          {
-            "node": "Build Row",
-            "type": "main",
-            "index": 0
-          }
+          {"node": "Merge", "type": "main", "index": 1}
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {"node": "Build Row", "type": "main", "index": 0}
         ]
       ]
     },
@@ -167,11 +156,7 @@
     "Google Sheets - Append or Update": {
       "main": [
         [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
+          {"node": "Respond to Webhook", "type": "main", "index": 0}
         ]
       ]
     }
