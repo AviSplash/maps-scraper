@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────────────
+# Google Maps Lead Scraper — Configuration
+# ─────────────────────────────────────────────────────────────────
+
+# Keywords to search when --keyword flag is not provided
+keywords:
+  - "HVAC contractors"
+  - "plumbers"
+  - "electricians"
+
+# Default location (city + state, or zip code)
+location: "Houston, TX"
+
+# Max results per keyword  (keep ≤ 200 for reliable direct scraping)
+max_results: 50
+
+# ─── Browser ─────────────────────────────────────────────────────
+# false = visible window (recommended — less likely to be blocked)
+# true  = headless / background
+headless: false
+
+# ─── Output ──────────────────────────────────────────────────────
+output_dir: "./output"
+formats:
+  - csv
+  - excel
+  - json
+
+# ─── Website Crawling ─────────────────────────────────────────────
+crawl_websites: true
+crawl_timeout: 10          # seconds per website
+
+# ─── Rate Limiting ────────────────────────────────────────────────
+scraper:
+  delay_between_results: 2   # seconds between each listing visit
+  delay_between_scrolls: 3   # seconds between scroll loads on results page
+
+# ─── n8n AI Enrichment ───────────────────────────────────────────
+# Sends website text to n8n → AI to extract owner name
+n8n:
+  enabled: false
+  webhook_url: ""            # e.g. http://localhost:5678/webhook/leads
+  timeout: 30                # seconds to wait for n8n response
