@@ -85,7 +85,9 @@
         "columns": {
           "mappingMode": "autoMapInputData",
           "value": {},
-          "matchingColumns": ["maps_url"],
+          "matchingColumns": [
+            "maps_url"
+          ],
           "schema": [],
           "attemptToConvertTypes": false,
           "convertFieldsToString": true
@@ -143,7 +145,11 @@
     "Build Row": {
       "main": [
         [
-          {"node": "Google Sheets - Append or Update", "type": "main", "index": 0}
+          {
+            "node": "Google Sheets - Append or Update",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -160,6 +166,6 @@
     "executionOrder": "v1"
   },
   "meta": {
-    "note": "Hybrid pipeline v2: Webhook fans out to both Claude Haiku AND a Merge node (input 0). Haiku response feeds Merge input 1. Merge combines both by position so Build Row receives all lead fields AND the AI response in one item — no cross-node referencing needed. After import: (1) set Anthropic API Key HTTP Header Auth credential (header name: x-api-key), (2) set Google Sheets OAuth2 credential and pick spreadsheet + sheet tab, (3) activate and copy the Production webhook URL into config.yaml under n8n.webhook_url."
+    "note": "Hybrid pipeline: local Python scraper POSTs each lead to this webhook. Claude Haiku extracts the owner name, Build Row assembles the full record, Google Sheets appends-or-updates the row (matched on maps_url, so re-runs do not duplicate), and the owner name is returned to the scraper. After import: (1) set the Anthropic API Key HTTP Header Auth credential (header x-api-key), (2) set the Google Sheets OAuth2 credential and pick your spreadsheet + sheet tab, (3) activate and copy the Production webhook URL into config.yaml under n8n.webhook_url."
   }
 }
