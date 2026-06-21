@@ -11,6 +11,7 @@ param(
     [switch]   $Headless,
     [switch]   $NoCrawl,
     [switch]   $NoN8n,
+    [switch]   $NoDedupe,
     [switch]   $Help
 )
 
@@ -30,6 +31,7 @@ Options:
   -Headless           Run browser hidden (no window)
   -NoCrawl            Skip website crawling (faster, no emails)
   -NoN8n              Skip n8n AI enrichment
+  -NoDedupe           Disable the SQLite duplicate filter
   -Help               Show this message
 
 Examples:
@@ -54,5 +56,6 @@ if ($Output)          { $pyArgs += "--output";   $pyArgs += $Output }
 if ($Headless)        { $pyArgs += "--headless" }
 if ($NoCrawl)         { $pyArgs += "--no-crawl" }
 if ($NoN8n)           { $pyArgs += "--no-n8n" }
+if ($NoDedupe)        { $pyArgs += "--no-dedupe" }
 
 & .venv\Scripts\python.exe @pyArgs

@@ -41,3 +41,10 @@ n8n:
   enabled: false
   webhook_url: ""            # e.g. http://localhost:5678/webhook/leads
   timeout: 30                # seconds to wait for n8n response
+
+# ─── Duplicate Prevention ────────────────────────────────────────
+# Tracks already-seen leads in a local SQLite file so re-runs skip the
+# expensive website crawl + AI enrichment. Key = Google Maps listing URL.
+dedupe:
+  enabled: true
+  db_path: "./leads.db"
