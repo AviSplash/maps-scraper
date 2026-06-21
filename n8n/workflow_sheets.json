@@ -74,7 +74,7 @@
     },
     {
       "parameters": {
-        "operation": "append",
+        "operation": "appendOrUpdate",
         "documentId": {
           "__rl": true,
           "value": "",
@@ -90,7 +90,9 @@
         "columns": {
           "mappingMode": "autoMapInputData",
           "value": {},
-          "matchingColumns": [],
+          "matchingColumns": [
+            "maps_url"
+          ],
           "schema": [],
           "attemptToConvertTypes": false,
           "convertFieldsToString": true
@@ -98,7 +100,7 @@
         "options": {}
       },
       "id": "node-sheets-004",
-      "name": "Google Sheets - Append Row",
+      "name": "Google Sheets - Append or Update",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
@@ -155,14 +157,14 @@
       "main": [
         [
           {
-            "node": "Google Sheets - Append Row",
+            "node": "Google Sheets - Append or Update",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Google Sheets - Append Row": {
+    "Google Sheets - Append or Update": {
       "main": [
         [
           {
@@ -179,6 +181,6 @@
     "executionOrder": "v1"
   },
   "meta": {
-    "note": "Hybrid pipeline: local Python scraper POSTs each lead to this webhook. Claude Haiku extracts the owner name, Build Row assembles the full record, Google Sheets appends it as a row, and the owner name is returned to the scraper. After import: (1) set the Anthropic API Key HTTP Header Auth credential (header x-api-key), (2) set the Google Sheets OAuth2 credential and pick your spreadsheet + sheet tab, (3) activate and copy the Production webhook URL into config.yaml under n8n.webhook_url."
+    "note": "Hybrid pipeline: local Python scraper POSTs each lead to this webhook. Claude Haiku extracts the owner name, Build Row assembles the full record, Google Sheets appends-or-updates the row (matched on maps_url, so re-runs do not duplicate), and the owner name is returned to the scraper. After import: (1) set the Anthropic API Key HTTP Header Auth credential (header x-api-key), (2) set the Google Sheets OAuth2 credential and pick your spreadsheet + sheet tab, (3) activate and copy the Production webhook URL into config.yaml under n8n.webhook_url."
   }
 }

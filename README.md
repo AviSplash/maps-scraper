@@ -76,6 +76,27 @@ Output files land in `./output/` as CSV, Excel, and JSON.
 | `-Headless` | off | Hide browser window |
 | `-NoCrawl` | off | Skip email crawling |
 | `-NoN8n` | off | Skip AI enrichment |
+| `-NoDedupe` | off | Disable the SQLite duplicate filter |
+
+---
+
+## Duplicate prevention
+
+The scraper keeps a local SQLite file (`leads.db`) of every business it has
+already processed, keyed on the Google Maps listing URL. On every run it skips
+leads it has seen before — *before* the website crawl and AI enrichment — so you
+don't waste time or API cost re-processing them, and the same business matching
+multiple keywords is only collected once.
+
+```yaml
+dedupe:
+  enabled: true
+  db_path: "./leads.db"
+```
+
+Disable per-run with `.\run.ps1 -NoDedupe`, or delete `leads.db` to start fresh.
+When exporting to Google Sheets via n8n, the workflow also uses *Append or Update*
+keyed on `maps_url`, so the sheet stays duplicate-free as a second layer.
 
 ---
 

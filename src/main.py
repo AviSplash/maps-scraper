@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import yaml
 from colorama import Fore, Style, init
 
+from dedupe import LeadStore
 from exporter import Exporter
 from maps_scraper import GoogleMapsScraper
 from n8n_client import N8nClient
@@ -60,12 +61,14 @@ examples:
                    help="Skip website crawling (faster, no emails)")
     p.add_argument("--no-n8n",   action="store_true",
                    help="Skip n8n enrichment")
+    p.add_argument("--no-dedupe", action="store_true",
+                   help="Disable the SQLite duplicate filter")
     p.add_argument("--config",   default="config.yaml",
                    help="Config file path (default %(default)s)")
     return p.parse_args()
 
 
-def _run_one(keyword, location, args, cfg, scraper, crawler, n8n, exporter):
+def _run_one(keyword, location, args, cfg, scraper, crawler, n8n, store, exporter):
     print(f"\n{Fore.CYAN}{'─'*55}")
     print(f"  Keyword  : {keyword}")
     print(f"  Location : {location}")
@@ -77,6 +80,14 @@ def _run_one(keyword, location, args, cfg, scraper, crawler, n8n, exporter):
     print(f"{Fore.GREEN}      Found {len(results)} businesses{Style.RESET_ALL}")
     if not results:
         return []
+
+    if store is not None:
+        results, dupes = store.filter_new(results)
+        if dupes:
+            print(f"{Fore.CYAN}      Skipped {dupes} duplicate(s) already seen{Style.RESET_ALL}")
+        if not results:
+            print(f"{Fore.CYAN}      All results were duplicates - nothing new.{Style.RESET_ALL}")
+            return []
 
     n8n_cfg = cfg.get("n8n", {})
     use_n8n = (
@@ -139,6 +150,11 @@ def main():
         webhook_url=n8n_cfg.get("webhook_url", ""),
         timeout=n8n_cfg.get("timeout", 30),
     )
+
+    dd_cfg   = cfg.get("dedupe", {})
+    use_dedupe = not args.no_dedupe and dd_cfg.get("enabled", True)
+    store = LeadStore(dd_cfg.get("db_path", "./leads.db")) if use_dedupe else None
+
     exporter = Exporter(output_dir=args.output, formats=args.format)
 
     print(f"\n{Fore.MAGENTA}{'═'*55}")
@@ -146,11 +162,15 @@ def main():
     print(f"{'═'*55}{Style.RESET_ALL}")
 
     total = []
-    for kw, loc in searches:
-        total.extend(_run_one(kw, loc, args, cfg, scraper, crawler, n8n, exporter))
+    try:
+        for kw, loc in searches:
+            total.extend(_run_one(kw, loc, args, cfg, scraper, crawler, n8n, store, exporter))
+    finally:
+        if store is not None:
+            store.close()
 
     print(f"\n{Fore.GREEN}{'═'*55}")
-    print(f"   Done — {len(total)} total leads collected")
+    print(f"   Done — {len(total)} new leads collected")
     print(f"   Saved to: {args.output}")
     print(f"{'═'*55}{Style.RESET_ALL}\n")
 
