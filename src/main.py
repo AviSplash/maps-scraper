@@ -16,6 +16,7 @@ from colorama import Fore, Style, init
 
 from dedupe import LeadStore
 from exporter import Exporter
+from linkedin_scraper import LinkedInScraper
 from maps_scraper import GoogleMapsScraper
 from n8n_client import N8nClient
 from website_crawler import WebsiteCrawler
@@ -61,6 +62,8 @@ examples:
                    help="Skip website crawling (faster, no emails)")
     p.add_argument("--no-n8n",   action="store_true",
                    help="Skip n8n enrichment")
+    p.add_argument("--no-linkedin", action="store_true",
+                   help="Skip LinkedIn owner lookup")
     p.add_argument("--no-dedupe", action="store_true",
                    help="Disable the SQLite duplicate filter")
     p.add_argument("--config",   default="config.yaml",
@@ -68,7 +71,7 @@ examples:
     return p.parse_args()
 
 
-def _run_one(keyword, location, args, cfg, scraper, crawler, n8n, store, exporter):
+def _run_one(keyword, location, args, cfg, scraper, crawler, linkedin, n8n, store, exporter):
     print(f"\n{Fore.CYAN}{'─'*55}")
     print(f"  Keyword  : {keyword}")
     print(f"  Location : {location}")
@@ -96,8 +99,12 @@ def _run_one(keyword, location, args, cfg, scraper, crawler, n8n, store, exporte
         and n8n_cfg.get("webhook_url")
     )
 
+    use_linkedin = not getattr(args, "no_linkedin", False)
+
     if not args.no_crawl:
         print(f"{Fore.YELLOW}[2/3] Crawling websites for emails...{Style.RESET_ALL}")
+    if use_linkedin:
+        print(f"{Fore.YELLOW}      + LinkedIn owner lookup{Style.RESET_ALL}")
     if use_n8n:
         print(f"{Fore.YELLOW}      + n8n AI enrichment for owner names{Style.RESET_ALL}")
 
@@ -110,9 +117,22 @@ def _run_one(keyword, location, args, cfg, scraper, crawler, n8n, store, exporte
             biz["email"] = "; ".join(crawl.get("emails", []))
             page_text    = crawl.get("page_text", "")
 
+        # LinkedIn owner lookup (runs after crawl so email is available)
+        if use_linkedin and not biz.get("owner_name"):
+            li = linkedin.find_owner(
+                business_name=biz.get("name", ""),
+                location=biz.get("address", "") or location,
+                domain=biz.get("domain", ""),
+                email=biz.get("email", "").split(";")[0].strip(),
+            )
+            if li["owner_name"]:
+                biz["owner_name"]   = li["owner_name"]
+                biz["linkedin_url"] = li["linkedin_url"]
+                biz["li_confidence"] = li["confidence"]
+
         if use_n8n:
             enriched = n8n.enrich(biz, page_text)
-            biz["owner_name"] = enriched.get("owner_name", "")
+            biz["owner_name"] = enriched.get("owner_name", biz.get("owner_name", ""))
 
         pct = int(i / len(results) * 100)
         print(f"\r      {pct}% ({i}/{len(results)})   ", end="", flush=True)
@@ -145,6 +165,11 @@ def main():
         delay_between_scrolls=sc_cfg.get("delay_between_scrolls", 3),
     )
     crawler  = WebsiteCrawler(timeout=cfg.get("crawl_timeout", 10))
+    li_cfg   = cfg.get("linkedin", {})
+    linkedin = LinkedInScraper(
+        timeout=li_cfg.get("timeout", 12),
+        delay=li_cfg.get("delay", 2.5),
+    )
     n8n_cfg  = cfg.get("n8n", {})
     n8n      = N8nClient(
         webhook_url=n8n_cfg.get("webhook_url", ""),
@@ -164,7 +189,7 @@ def main():
     total = []
     try:
         for kw, loc in searches:
-            total.extend(_run_one(kw, loc, args, cfg, scraper, crawler, n8n, store, exporter))
+            total.extend(_run_one(kw, loc, args, cfg, scraper, crawler, linkedin, n8n, store, exporter))
     finally:
         if store is not None:
             store.close()

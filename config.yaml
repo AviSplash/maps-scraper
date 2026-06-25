@@ -35,6 +35,14 @@ scraper:
   delay_between_results: 2   # seconds between each listing visit
   delay_between_scrolls: 3   # seconds between scroll loads on results page
 
+# ─── LinkedIn Owner Lookup ───────────────────────────────────────
+# Uses Google site:linkedin.com/in search to find the business owner.
+# Validates candidates by matching business name, location, email domain.
+# Disable with --no-linkedin flag.
+linkedin:
+  timeout: 12                 # HTTP timeout (seconds)
+  delay: 2.5                  # Seconds to pause before each Google query
+
 # ─── n8n AI Enrichment ───────────────────────────────────────────
 # Sends website text to n8n → AI to extract owner name
 n8n:
